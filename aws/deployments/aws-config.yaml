@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-config
+data:
+  AWS_ACCOUNT_ID: "your-aws-account-id"
+  AWS_REGION: "your-aws-region"

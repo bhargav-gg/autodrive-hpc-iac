@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autodrive
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: autodrive
+  template:
+    metadata:
+      labels:
+        app: autodrive
+    spec:
+      containers:
+      - name: autodrive
+        image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/autodrive:latest"
+        imagePullPolicy: Always
+        env:
+        - name: DISPLAY
+          value: ":20"
+        - name: "XDG_RUNTIME_DIR" 
+          value: "/tmp/runtime-dir"
+        command:
+        - ./entrypoint.sh
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        envFrom:
+        - configMapRef:
+            name: aws-config
+      - name: autodrive-api
+        image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/api:latest"
+        imagePullPolicy: Always
+        command: ["python"]
+        args: ["AutoDRIVE_API/rzr_aeb.py"]
+        ports:
+        - containerPort: 4567
+        envFrom:
+        - configMapRef:
+            name: aws-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: autodrive
+spec:
+  selector:
+    app: autodrive
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
